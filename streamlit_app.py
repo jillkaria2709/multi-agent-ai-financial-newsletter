@@ -1,53 +1,51 @@
 import streamlit as st
-from openai import OpenAI
 
-# Show title and description.
-st.title("📄 Document question answering")
-st.write(
-    "Upload a document below and ask a question about it – GPT will answer! "
-    "To use this app, you need to provide an OpenAI API key, which you can get [here](https://platform.openai.com/account/api-keys). "
-)
+# Initialize session state for selected name if not already set
+if "selected_name" not in st.session_state:
+    st.session_state.selected_name = None
+if "page" not in st.session_state:
+    st.session_state.page = "home"  # Default to the homepage
 
-# Ask user for their OpenAI API key via `st.text_input`.
-# Alternatively, you can store the API key in `./.streamlit/secrets.toml` and access it
-# via `st.secrets`, see https://docs.streamlit.io/develop/concepts/connections/secrets-management
-openai_api_key = st.text_input("OpenAI API Key", type="password")
-if not openai_api_key:
-    st.info("Please add your OpenAI API key to continue.", icon="🗝️")
+# Sidebar dropdown for selecting a user
+st.sidebar.title("Select a Portfolio")
+names = ["Alice", "Bob", "Charlie", "David", "Evelyn", "Frank", "Grace", "Hannah", "Isaac", "Julia"]
+
+# Dropdown to select a name
+selected_name = st.sidebar.selectbox("Choose a name", ["Select..."] + names)
+
+# Set the selected name and switch to the portfolio page if a name is chosen
+if selected_name != "Select...":
+    st.session_state.selected_name = selected_name
+    st.session_state.page = "portfolio"
 else:
+    st.session_state.page = "home"
 
-    # Create an OpenAI client.
-    client = OpenAI(api_key=openai_api_key)
-
-    # Let the user upload a file via `st.file_uploader`.
-    uploaded_file = st.file_uploader(
-        "Upload a document (.txt or .md)", type=("txt", "md")
+# Homepage content
+def display_homepage():
+    st.title("Multi-Agent AI Financial Newsletter 💲🤑")
+    st.write(
+        "An AI-powered financial newsletter that delivers personalized, real-time insights and summaries, leveraging memory and retrieval to keep users informed and engaged."
     )
+    st.button("Get Newsletter")
 
-    # Ask the user for a question via `st.text_area`.
-    question = st.text_area(
-        "Now ask a question about the document!",
-        placeholder="Can you give me a short summary?",
-        disabled=not uploaded_file,
-    )
+# Portfolio page content with mock file upload and chat input
+def display_portfolio():
+    st.title(f"{st.session_state.selected_name}'s Portfolio")
+    st.write(f"Welcome to {st.session_state.selected_name}'s personalized financial insights page!")
 
-    if uploaded_file and question:
+    # File upload for RAG (mock)
+    uploaded_file = st.file_uploader("Upload a CSV file for RAG (Retrieval-Augmented Generation)", type="csv")
+    if uploaded_file:
+        st.write("**CSV file uploaded successfully!**")
 
-        # Process the uploaded file and question.
-        document = uploaded_file.read().decode()
-        messages = [
-            {
-                "role": "user",
-                "content": f"Here's a document: {document} \n\n---\n\n {question}",
-            }
-        ]
+    # Chat input for asking about the portfolio (mock)
+    st.write("### Ask about the Portfolio")
+    user_question = st.text_input("Type your question here")
+    if user_question:
+        st.write("**Answer:** This is where the response would appear.")
 
-        # Generate an answer using the OpenAI API.
-        stream = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=messages,
-            stream=True,
-        )
-
-        # Stream the response to the app using `st.write_stream`.
-        st.write_stream(stream)
+# Display the appropriate page based on the session state
+if st.session_state.page == "home":
+    display_homepage()
+elif st.session_state.page == "portfolio":
+    display_portfolio()
